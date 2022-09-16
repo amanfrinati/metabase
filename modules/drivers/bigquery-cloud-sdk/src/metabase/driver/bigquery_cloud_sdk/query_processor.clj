@@ -157,17 +157,17 @@
 (defmethod temporal-type OffsetDateTime [_] :timestamp)
 (defmethod temporal-type ZonedDateTime  [_] :timestamp)
 
-(defn- coercion-strategy->temporat-type [coercion-strategy]
-  (case coercion-strategy
-    :Coercion/ISO8601->DateTime :timestamp
-    :else nil))
-
 (defn- base-type->temporal-type [base-type]
   (condp #(isa? %2 %1) base-type
     :type/Date           :date
     :type/Time           :time
     :type/DateTimeWithTZ :timestamp
     :type/DateTime       :datetime
+    nil))
+
+(defn- coercion-strategy->temporat-type [coercion-strategy]
+  (case coercion-strategy
+    :Coercion/ISO8601->DateTime :timestamp
     nil))
 
 (defn- database-type->temporal-type [database-type]
@@ -181,8 +181,8 @@
 (defmethod temporal-type Field
   [{base-type :base_type, effective-type :effective_type, database-type :database_type,
     coercion-strategy :coercion_strategy}]
-  (or #_(coercion-strategy->temporat-type coercion-strategy)
-      (database-type->temporal-type database-type)
+  (or (database-type->temporal-type database-type)
+      (coercion-strategy->temporat-type coercion-strategy)
       (base-type->temporal-type (or effective-type base-type))))
 
 (defmethod temporal-type TypedHoneySQLForm
@@ -706,7 +706,8 @@
   ;; `timestamp_add()` doesn't support month/quarter/year, so cast it to `datetime` so we can use `datetime_add()`
   ;; instead in those cases.
   (let [hsql-form (cond->> hsql-form
-                    (and (not (contains? (temporal-type->supported-units :timestamp) unit)))
+                    (and (#{:timestamp} (temporal-type hsql-form))
+                       (not (contains? (temporal-type->supported-units :timestamp) unit)))
                     (hx/cast :datetime))]
     (add-interval-form hsql-form amount unit)))
 
