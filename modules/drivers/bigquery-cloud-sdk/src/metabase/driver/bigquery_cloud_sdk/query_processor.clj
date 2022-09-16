@@ -706,8 +706,7 @@
   ;; `timestamp_add()` doesn't support month/quarter/year, so cast it to `datetime` so we can use `datetime_add()`
   ;; instead in those cases.
   (let [hsql-form (cond->> hsql-form
-                    (and (= (temporal-type hsql-form) :timestamp)
-                         (not (contains? (temporal-type->supported-units :timestamp) unit)))
+                    (and (not (contains? (temporal-type->supported-units :timestamp) unit)))
                     (hx/cast :datetime))]
     (add-interval-form hsql-form amount unit)))
 

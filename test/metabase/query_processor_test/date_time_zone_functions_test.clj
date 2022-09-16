@@ -107,7 +107,7 @@
                 (testing (format "%s function works as expected on %s column for driver %s" op col-type driver/*driver*)
                   (is (= (set expected) (set (test-date-extract query))))))))))
 
-    ;; need to have seperate tests for mongo it doesn't have supports for casting yet
+    ;; need to have seperate tests for mongo because it doesn't have supports for casting yet
     (mt/test-driver :mongo
       (testing "with datetimes columns"
         (let [[col-type field-id] [:datetime (mt/id :times :dt)]]
@@ -160,14 +160,14 @@
                                                 :month   30)))
                  :else
                  (u.date/add x unit amount))
-        fmt     (cond
-                  ;; actually the :date column of :presto should have this format too,
-                  ;; but we the test data we created for presto is datetime even if we define it as date
-                  (and (= driver/*driver* :presto) (#{:text-as-date} col-type))
-                  "yyyy-MM-dd"
+        fmt    (cond
+                 ;; the :date column of :presto should have this format too,
+                 ;; but the test data we created for presto is datetime even if we define it as date
+                 (and (= driver/*driver* :presto) (#{:text-as-date} col-type))
+                 "yyyy-MM-dd"
 
-                  :else
-                  "yyyy-MM-dd HH:mm:ss")]
+                 :else
+                 "yyyy-MM-dd HH:mm:ss")]
     (t/format fmt result)))
 
 (defn- mongo-major-version [db]
