@@ -6,7 +6,8 @@
     "ace/ext-searchbox": "<rootDir>/frontend/test/__mocks__/aceSearchBoxExtMock.js"
   },
   "testPathIgnorePatterns": [
-    "<rootDir>/frontend/test/.*/.*.tz.unit.spec.{js,jsx,ts,tsx}"
+    "<rootDir>/frontend/test/.*/.*.tz.unit.spec.{js,jsx,ts,tsx}",
+    "/node_modules/(?!(d3.*)/)"
   ],
   "testMatch": [
     "<rootDir>/**/*.unit.spec.js",
