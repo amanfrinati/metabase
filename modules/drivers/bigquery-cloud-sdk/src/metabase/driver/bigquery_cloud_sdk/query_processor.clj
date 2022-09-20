@@ -162,10 +162,10 @@
     :type/Date           :date
     :type/Time           :time
     :type/DateTimeWithTZ :timestamp
-    :type/DateTime       :datetime
+    :type/DateTime       :timestamp
     nil))
 
-(defn- coercion-strategy->temporat-type [coercion-strategy]
+(defn- coercion-strategy->temporal-type [coercion-strategy]
   (case coercion-strategy
     :Coercion/ISO8601->DateTime               :timestamp
     :Coercion/ISO8601->Date                   :date
@@ -185,7 +185,7 @@
   [{base-type :base_type, effective-type :effective_type, database-type :database_type,
     coercion-strategy :coercion_strategy}]
   (or (database-type->temporal-type database-type)
-      (coercion-strategy->temporat-type coercion-strategy)
+      #_(coercion-strategy->temporal-type coercion-strategy)
       (base-type->temporal-type (or effective-type base-type))))
 
 (defmethod temporal-type TypedHoneySQLForm
