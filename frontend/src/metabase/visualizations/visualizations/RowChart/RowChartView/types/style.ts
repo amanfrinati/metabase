@@ -1,18 +1,19 @@
+export type ChartFont = {
+  size: number;
+  family?: string;
+  weight?: number;
+  color?: string;
+};
+
 export type ChartTheme = {
   axis: {
     color: string;
-    ticksFontSize: number;
-    ticksFontWeight: number;
+    ticks: ChartFont;
   };
-  dataLabels: {
-    color: string;
-    fontSize: number;
-    fontWeight: number;
-  };
+  dataLabels: ChartFont;
   goal: {
-    color: string;
-    fontSize: number;
-    fontWeight: number;
+    lineStroke: string;
+    label: ChartFont;
   };
   grid: {
     color: string;

@@ -1,16 +1,24 @@
 import { RowValue } from "metabase-types/api";
 import { measureText } from "metabase/lib/measure-text";
 import { Margin } from "../RowChartView/types/margin";
+import { ChartFont } from "../RowChartView/types/style";
 import { GroupedDataset } from "./data";
 
-export const getMaxWidth = (formattedYTicks: string[]): number => {
+const CHART_PADDING = 10;
+const TICKS_OFFSET = 10;
+const GOAL_LINE_PADDING = 14;
+
+export const getMaxWidth = (
+  formattedYTicks: string[],
+  ticksFont: ChartFont,
+): number => {
   return Math.max(
     ...formattedYTicks.map(
       tick =>
         measureText(tick, {
-          size: `14px`,
+          size: `${ticksFont.size}px`,
           family: "Lato",
-          weight: "700",
+          weight: String(ticksFont.weight ?? 400),
         }).width,
     ),
   );
@@ -19,16 +27,19 @@ export const getMaxWidth = (formattedYTicks: string[]): number => {
 export const getChartMargin = (
   data: GroupedDataset,
   yTickFormatter: (value: RowValue) => string,
+  ticksFont: ChartFont,
+  hasGoalLine: boolean,
 ): Margin => {
   const yTicksWidth = getMaxWidth(
     data.map(datum => yTickFormatter(datum.dimensionValue)),
+    ticksFont,
   );
 
   const margin: Margin = {
-    top: 20,
-    left: yTicksWidth + 10,
-    bottom: 40,
-    right: 20,
+    top: CHART_PADDING + (hasGoalLine ? GOAL_LINE_PADDING : 0),
+    left: yTicksWidth + TICKS_OFFSET + CHART_PADDING,
+    bottom: CHART_PADDING + TICKS_OFFSET + ticksFont.size,
+    right: CHART_PADDING,
   };
 
   return margin;

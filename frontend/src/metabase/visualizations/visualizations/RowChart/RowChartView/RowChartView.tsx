@@ -26,9 +26,8 @@ interface RowChartViewProps<TDatum> {
   height: number;
   data: TDatum[];
   series: Series<TDatum>[];
-  isStacked?: boolean;
   shouldShowLabels?: boolean;
-  stackingOffset?: StackingOffset;
+  stackingOffset: StackingOffset | null;
   onHoverChange?: (seriesIndex: number | null, barIndex: number | null) => void;
   onClick?: (
     event: React.MouseEvent,
@@ -114,9 +113,8 @@ export const RowChartView = <TDatum,>({
   data,
   goal,
   series: multipleSeries,
-  isStacked = true,
   shouldShowLabels,
-  stackingOffset = "none",
+  stackingOffset = null,
   theme,
   margin,
   yTickFormatter,
@@ -136,6 +134,8 @@ export const RowChartView = <TDatum,>({
     }, {} as Record<string, Series<TDatum>>);
   }, [multipleSeries]);
 
+  const isStacked = stackingOffset != null;
+
   const d3stack = useMemo(
     () =>
       stack<TDatum>()
@@ -143,7 +143,7 @@ export const RowChartView = <TDatum,>({
         .value((datum, seriesKey) => {
           return seriesByKey[seriesKey].xAccessor(datum) ?? 0;
         })
-        .offset(StackingOffsetFn[stackingOffset]),
+        .offset(StackingOffsetFn[stackingOffset ?? "none"]),
     [multipleSeries, seriesByKey, stackingOffset],
   );
   const stackedData: D3Series<TDatum, string>[] = useMemo(
@@ -191,19 +191,22 @@ export const RowChartView = <TDatum,>({
         <AxisLeft
           tickFormat={yTickFormatter}
           hideTicks
+          numTicks={Infinity}
           scale={yScale}
           stroke={theme.axis.color}
           tickStroke={theme.axis.color}
           tickLabelProps={() => ({
             fill: theme.axis.color,
-            fontSize: theme.axis.ticksFontSize,
-            fontWeight: theme.axis.ticksFontWeight,
+            fontSize: theme.axis.ticks.size,
+            fontWeight: theme.axis.ticks.weight,
             textAnchor: "end",
             dy: "0.33em",
           })}
         />
         <AxisBottom
           hideTicks
+          // TODO: calculate
+          numTicks={5}
           tickFormat={xTickFormatter}
           top={yMax}
           scale={xScale}
@@ -211,8 +214,8 @@ export const RowChartView = <TDatum,>({
           tickStroke={theme.axis.color}
           tickLabelProps={() => ({
             fill: theme.axis.color,
-            fontSize: theme.axis.ticksFontSize,
-            fontWeight: theme.axis.ticksFontWeight,
+            fontSize: theme.axis.ticks.size,
+            fontWeight: theme.axis.ticks.weight,
             textAnchor: "middle",
           })}
         />
@@ -267,9 +270,9 @@ export const RowChartView = <TDatum,>({
                 />
                 {isLabelVisible && (
                   <Text
-                    fontSize={theme.dataLabels.fontSize}
+                    fontSize={theme.dataLabels.size}
                     fill={theme.dataLabels.color}
-                    fontWeight={theme.dataLabels.fontWeight}
+                    fontWeight={theme.dataLabels.weight}
                     dx="0.33em"
                     x={x + width}
                     y={y + height / 2}
@@ -292,15 +295,15 @@ export const RowChartView = <TDatum,>({
               verticalAnchor="end"
               dy="-0.2em"
               x={goalLineValue}
-              fill={theme.goal.color}
-              fontSize={theme.goal.fontSize}
-              fontWeight={theme.goal.fontWeight}
+              fill={theme.goal.label.color}
+              fontSize={theme.goal.label.size}
+              fontWeight={theme.goal.label.weight}
             >
               {goal?.label}
             </Text>
             <Line
               strokeDasharray={4}
-              stroke={theme.goal.color}
+              stroke={theme.goal.lineStroke}
               strokeWidth={2}
               y1={0}
               y2={yMax}

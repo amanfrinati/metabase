@@ -23,6 +23,7 @@ export type MetricDatum = { [key: MetricName]: MetricValue };
 export type SeriesInfo = {
   metricColumn: DatasetColumn;
   dimensionColumn: DatasetColumn;
+  breakoutValue: RowValue;
 };
 
 export type GroupedDatum = {
@@ -125,9 +126,13 @@ export const groupExcessiveData = (
 
   const groupStartingFromIndex = valuesLimit - 1;
   const result = dataset.slice();
-  const dataToGroup = result.splice(groupStartingFromIndex - 1);
+  const dataToGroup = result.splice(groupStartingFromIndex);
 
-  const groupedDatumDimensionValue = valuesLimit > 1 ? t`Other` : t`All values`;
+  const groupedDatumDimensionValue =
+    dataToGroup.length === dataset.length
+      ? t`All values (${dataToGroup.length})`
+      : t`Other (${dataToGroup.length})`;
+
   const groupedValuesDatum = dataToGroup.reduce(
     (groupedValue, currentValue) => {
       groupedValue.metrics = sumMetrics(
@@ -160,16 +165,17 @@ const getBreakoutDistinctValues = (
   data: DatasetData,
   breakout: ColumnDescriptor,
 ) => {
-  return Array.from(new Set(data.rows.map(row => String(row[breakout.index]))));
+  return Array.from(new Set(data.rows.map(row => row[breakout.index])));
 };
 
 const getBreakoutSeries = (
-  breakoutValues: string[],
+  breakoutValues: RowValue[],
   metric: ColumnDescriptor,
   dimension: ColumnDescriptor,
   colors: string[],
 ): Series<GroupedDatum, SeriesInfo>[] => {
-  return breakoutValues.map((breakoutName, seriesIndex) => {
+  return breakoutValues.map((breakoutValue, seriesIndex) => {
+    const breakoutName = String(breakoutValue);
     return {
       seriesKey: breakoutName,
       yAccessor: (datum: GroupedDatum) => String(datum.dimensionValue),
@@ -179,6 +185,7 @@ const getBreakoutSeries = (
       seriesInfo: {
         metricColumn: metric.column,
         dimensionColumn: dimension.column,
+        breakoutValue,
       },
     };
   });

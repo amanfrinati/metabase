@@ -7,5 +7,5 @@ export const getMaxYValuesCount = (
   // TODO: include bar padding into the calculation
   const singleValueHeight = isStacked ? minBarWidth : minBarWidth * seriesCount;
 
-  return Math.floor(viewportHeight / singleValueHeight);
+  return Math.max(Math.floor(viewportHeight / singleValueHeight), 1);
 };

@@ -1,7 +1,10 @@
-import { DatasetData, VisualizationSettings } from "metabase-types/api";
-import { isMetric } from "metabase/lib/schema_metadata";
+import {
+  DatasetColumn,
+  RowValue,
+  VisualizationSettings,
+} from "metabase-types/api";
 import { Series } from "../RowChartView/types/series";
-import { getColumnDescriptors } from "./columns";
+import { ChartColumns } from "./columns";
 import { GroupedDataset, GroupedDatum, SeriesInfo } from "./data";
 
 export const getClickData = (
@@ -9,32 +12,33 @@ export const getClickData = (
   datumIndex: number,
   series: Series<GroupedDatum, SeriesInfo>[],
   groupedData: GroupedDataset,
-  data: DatasetData,
   visualizationSettings: VisualizationSettings,
+  chartColumns: ChartColumns,
 ) => {
-  const dimensionDescriptors = getColumnDescriptors(
-    visualizationSettings["graph.dimensions"] ?? [],
-    data.cols,
-  );
-
-  const metricColumns = data.cols.filter(isMetric).map(column => column.name);
-  const metricDescriptors = getColumnDescriptors(metricColumns, data.cols);
-
   const clickedSeries = series[seriesIndex];
   const datum = groupedData[datumIndex];
 
-  const value = clickedSeries.xAccessor(datum);
+  const xValue = clickedSeries.xAccessor(datum);
+  const yValue = clickedSeries.yAccessor(datum);
+
+  const dimensions: { column: DatasetColumn; value?: RowValue }[] = [
+    {
+      column: chartColumns.dimension.column,
+      value: yValue,
+    },
+  ];
+
+  if ("breakout" in chartColumns) {
+    dimensions.push({
+      column: chartColumns.breakout.column,
+      value: clickedSeries.seriesInfo?.breakoutValue,
+    });
+  }
 
   return {
-    value,
-    column: data.cols[metricDescriptors[0].index],
-    data: [],
-    dimensions: dimensionDescriptors.map(dimension => {
-      return {
-        column: data.cols[dimension.index],
-        value: datum.dimensionValue,
-      };
-    }),
+    value: xValue,
+    column: clickedSeries.seriesInfo?.metricColumn,
+    dimensions,
     settings: visualizationSettings,
   };
 };

@@ -31,6 +31,8 @@ import { Margin } from "./RowChartView/types/margin";
 import { getChartColumns } from "./utils/columns";
 import { getClickData } from "./utils/events";
 import { getFormatters } from "./utils/format";
+import { getStackingOffset } from "./utils/stacking";
+import { getChartGoal } from "./utils/goal";
 
 const MIN_BAR_HEIGHT = 24;
 
@@ -44,6 +46,35 @@ interface RowChartProps {
   visualizationIsClickable: $FIXME;
   onVisualizationClick: $FIXME;
 }
+
+const getChartTheme = () => {
+  return {
+    axis: {
+      color: color("bg-dark"),
+      ticks: {
+        size: 12,
+        weight: 700,
+        color: color("bg-dark"),
+      },
+    },
+    goal: {
+      lineStroke: color("text-medium"),
+      label: {
+        size: 14,
+        weight: 700,
+        color: color("text-medium"),
+      },
+    },
+    dataLabels: {
+      weight: 700,
+      color: color("text-dark"),
+      size: 14,
+    },
+    grid: {
+      color: color("border"),
+    },
+  };
+};
 
 const RowChart = ({
   width,
@@ -78,52 +109,23 @@ const RowChart = ({
       datumIndex,
       series,
       groupedData,
-      data,
+      settings,
       chartColumns,
     );
 
     onVisualizationClick({ ...clickData, element: event.target });
   };
 
-  const goal = settings["graph.show_goal"]
-    ? {
-        value: settings["graph.goal_value"] ?? 0,
-        label: settings["graph.goal_label"],
-      }
-    : undefined;
+  const goal = useMemo(() => getChartGoal(settings), [settings]);
 
-  const theme: ChartTheme = useMemo(
-    () => ({
-      axis: {
-        color: color("bg-dark"),
-        ticksFontSize: 12,
-        ticksFontWeight: 700,
-      },
-      goal: {
-        color: color("text-medium"),
-        fontSize: 14,
-        fontWeight: 700,
-      },
-      dataLabels: {
-        fontWeight: 700,
-        color: color("text-dark"),
-        fontSize: 14,
-      },
-      grid: {
-        color: color("border"),
-      },
-    }),
-    [],
-  );
+  const theme: ChartTheme = useMemo(getChartTheme, []);
 
-  const isStacked = settings["stackable.stack_type"] != null;
-  const stackingOffset =
-    settings["stackable.stack_type"] === "stacked" ? "none" : "expand";
+  const stackingOffset = getStackingOffset(settings);
 
   const maxYValues = getMaxYValuesCount(
     height,
     MIN_BAR_HEIGHT,
-    isStacked,
+    stackingOffset != null,
     series.length,
   );
 
@@ -138,13 +140,18 @@ const RowChart = ({
   );
 
   const margin = useMemo(
-    () => getChartMargin(trimmedData, yTickFormatter),
-    [trimmedData, yTickFormatter],
+    () =>
+      getChartMargin(
+        trimmedData,
+        yTickFormatter,
+        theme.axis.ticks,
+        goal != null,
+      ),
+    [goal, theme.axis.ticks, trimmedData, yTickFormatter],
   );
 
   const shouldShowLabels =
-    settings["graph.show_values"] &&
-    !(isStacked && stackingOffset === "expand");
+    settings["graph.show_values"] && stackingOffset !== "expand";
 
   return (
     <RowChartView
@@ -159,7 +166,6 @@ const RowChart = ({
       yTickFormatter={yTickFormatter}
       xTickFormatter={xTickFormatter}
       shouldShowLabels={shouldShowLabels}
-      isStacked={isStacked}
       stackingOffset={stackingOffset}
     />
   );
