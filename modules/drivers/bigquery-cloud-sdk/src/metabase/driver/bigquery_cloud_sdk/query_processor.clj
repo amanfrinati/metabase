@@ -162,7 +162,7 @@
     :type/Date           :date
     :type/Time           :time
     :type/DateTimeWithTZ :timestamp
-    :type/DateTime       :timestamp
+    :type/DateTime       :datetime
     nil))
 
 (defn- coercion-strategy->temporal-type [coercion-strategy]
@@ -185,7 +185,6 @@
   [{base-type :base_type, effective-type :effective_type, database-type :database_type,
     coercion-strategy :coercion_strategy}]
   (or (database-type->temporal-type database-type)
-      #_(coercion-strategy->temporal-type coercion-strategy)
       (base-type->temporal-type (or effective-type base-type))))
 
 (defmethod temporal-type TypedHoneySQLForm
@@ -768,7 +767,7 @@
 
 (defmethod sql.qp/cast-temporal-string [:bigquery-cloud-sdk :Coercion/ISO8601->DateTime]
   [_driver _semantic_type expr]
-  (hx/->timestamp expr))
+  (hx/->datetime expr))
 
 (defmethod sql.qp/cast-temporal-string [:bigquery-cloud-sdk :Coercion/ISO8601->Date]
   [_driver _semantic_type expr]
