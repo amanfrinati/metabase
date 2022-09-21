@@ -594,7 +594,7 @@
 
 (def date+time+timezone-functions
   "Date, time, and timezone related functions."
-  (set/union date-extract-functions #{:date-add :date-subtract}))
+  (set/union date-extract-functions #{:date-add :date-subtract :convert-timezone}))
 
 (defclause ^{:requires-features #{:date-functions}} get-year
   date ExpressionArg)
@@ -620,6 +620,11 @@
 (defclause ^{:requires-features #{:date-functions}} get-second
   datetime ExpressionArg)
 
+(defclause ^{:requires-features #{:date-functions}} convert-timezone
+  datetime ExpressionArg
+  to       StringExpressionArg
+  from     (optional StringExpressionArg))
+
 (def ^:private ArithmeticDateTimeUnit
   (s/named
    (apply s/enum #{:default :second :minute :hour :day :week :month :quarter :year})
@@ -636,7 +641,7 @@
   unit     ArithmeticDateTimeUnit)
 
 (def ^:private DateFunctionExpression*
-  (one-of get-year get-quarter get-month get-day get-day-of-week get-hour get-minute get-second date-add date-subtract))
+  (one-of get-year get-quarter get-month get-day get-day-of-week get-hour get-minute get-second date-add date-subtract convert-timezone))
 
 (def ^:private DateFunctionExpression
   "Schema for the definition of a date function expression."
@@ -818,7 +823,6 @@
 (def ^:private StringExpression*
   (one-of substring trim ltrim rtrim replace lower upper concat regex-match-first coalesce case))
 
-
 (def FieldOrExpressionDef
   "Schema for anything that is accepted as a top-level expression definition, either an arithmetic expression such as a
   `:+` clause or a `:field` clause."
@@ -895,7 +899,7 @@
     (one-of count avg cum-count cum-sum distinct stddev sum min max metric share count-where
             sum-where case median percentile ag:var
             get-year get-quarter get-month get-day get-day-of-week get-hour get-minute get-second
-            date-add date-subtract)))
+            date-add date-subtract convert-timezone)))
 
 (def ^:private UnnamedAggregation
   (s/recursive #'UnnamedAggregation*))

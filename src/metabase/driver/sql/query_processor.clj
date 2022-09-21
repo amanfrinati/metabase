@@ -17,6 +17,7 @@
             [metabase.query-processor.middleware.annotate :as annotate]
             [metabase.query-processor.middleware.wrap-value-literals :as qp.wrap-value-literals]
             [metabase.query-processor.store :as qp.store]
+            [metabase.query-processor.timezone :as qp.timezone]
             [metabase.query-processor.util.add-alias-info :as add]
             [metabase.query-processor.util.nest-query :as nest-query]
             [metabase.util :as u]
@@ -609,6 +610,24 @@
 (defmethod ->honeysql [:sql :date-subtract]
   [driver [_ arg amount unit]]
   (add-interval-honeysql-form driver (->honeysql driver arg) (- amount) unit))
+
+(defrecord AtTimeZone
+  ;; record type to support applying Presto's `AT TIME ZONE` operator to an expression
+  [expr zone]
+  hformat/ToSql
+  (to-sql [_]
+    (format "%s AT TIME ZONE %s"
+      (hformat/to-sql expr)
+      (hformat/to-sql (hx/literal zone)))))
+
+(defmethod ->honeysql [:sql :convert-timezone]
+  [driver [_ arg to from]]
+  (let [from (or from (qp.timezone/report-timezone-id-if-supported driver))]
+    (cond-> (->honeysql driver arg)
+      from
+      (->AtTimeZone from)
+      to
+      (->AtTimeZone to))))
 
 ;;; +----------------------------------------------------------------------------------------------------------------+
 ;;; |                                            Field Aliases (AS Forms)                                            |

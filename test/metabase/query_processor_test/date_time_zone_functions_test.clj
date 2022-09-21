@@ -29,23 +29,32 @@
 
 (mt/defdataset times-mixed
   [["times" [{:field-name "index"
-              :base-type :type/Integer}
+              :base-type  :type/Integer}
              {:field-name "dt"
-              :base-type :type/DateTime}
+              :base-type  :type/DateTime}
+             {:field-name "dt_tz"
+              :base-type  :type/DateTimeWithZoneID}
              {:field-name "d"
-              :base-type :type/Date}
-             {:field-name "as_dt"
-              :base-type :type/Text
-              :effective-type :type/DateTime
+              :base-type  :type/Date}
+             {:field-name         "as_dt"
+              :base-type         :type/Text
+              :effective-type    :type/DateTime
               :coercion-strategy :Coercion/ISO8601->DateTime}
-             {:field-name "as_d"
-              :base-type :type/Text
-              :effective-type :type/Date
+             {:field-name        "as_d"
+              :base-type         :type/Text
+              :effective-type    :type/Date
               :coercion-strategy :Coercion/ISO8601->Date}]
-    [[1 #t "2004-03-19 09:19:09" #t "2004-03-19" "2004-03-19 09:19:09" "2004-03-19"]
-     [2 #t "2008-06-20 10:20:10" #t "2008-06-20" "2008-06-20 10:20:10" "2008-06-20"]
-     [3 #t "2012-11-21 11:21:11" #t "2012-11-21" "2012-11-21 11:21:11" "2012-11-21"]
-     [4 #t "2012-11-21 11:21:11" #t "2012-11-21" "2012-11-21 11:21:11" "2012-11-21"]]]])
+    (for [[idx t]
+          (map-indexed vector [#t "2004-03-19 09:19:09-00:00[Asia/Ho_Chi_Minh]"
+                               #t "2008-06-20 10:20:10-00:00[Asia/Ho_Chi_Minh]"
+                               #t "2012-11-21 11:21:11-00:00[Asia/Ho_Chi_Minh]"
+                               #t "2012-11-21 11:21:11-00:00[Asia/Ho_Chi_Minh]"])]
+      [idx
+       (t/local-date-time t)                                  ;; dt
+       (t/offset-date-time t)                                 ;; dt_dz
+       (t/local-date)                                         ;; d
+       (t/format "yyyy-MM-dd HH:mm:ss" (t/local-date-time t)) ;; as_dt
+       (t/format "yyyy-MM-dd" (t/local-date t))])]])          ;; as_d
 
 (def ^:private date-extraction-op->-unit
   {:get-second      :second-of-minute
@@ -279,3 +288,21 @@
           (is (= #{[2006] [2010] [2014]}
                  (set (test-date-extract {:expressions {"expr" [:date-add [:field field-id nil] 2 :year]}
                                           :aggregation [[:get-year [:expression "expr"]]]})))))))))
+(deftest tz-timezone-test
+  (mt/test-drivers (mt/normal-drivers-with-feature :date-functions)
+    (mt/dataset times-mixed
+      (testing "dt_tz column should have instant changed"
+        (is (= "2004-03-19T03:19:09+01:00"
+                (with-report-timezeone "Africa/Bangui"
+                                (ffirst (mt/rows (mt/process-query
+                                                   (mt/mbql-query times
+                                                                  {:fields [[:field (mt/id :times :dt_tz) nil]]
+                                                                   :limit 1}))))))))
+      (testing "dt column should have the same instant but added a tz"
+        (is (= "2004-03-19T09:19:09+01:00"
+                (with-report-timezeone "Africa/Bangui"
+                                (ffirst (mt/rows (mt/process-query
+                                                   (mt/mbql-query times
+                                                                  {:fields [[:field (mt/id :times :dt) nil]]
+                                                                   :limit 1})))))))))))
+
