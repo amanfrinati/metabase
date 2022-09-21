@@ -52,7 +52,7 @@
       [idx
        (t/local-date-time t)                                  ;; dt
        (t/offset-date-time t)                                 ;; dt_dz
-       (t/local-date)                                         ;; d
+       (t/local-date t)                                       ;; d
        (t/format "yyyy-MM-dd HH:mm:ss" (t/local-date-time t)) ;; as_dt
        (t/format "yyyy-MM-dd" (t/local-date t))])]])          ;; as_d
 
