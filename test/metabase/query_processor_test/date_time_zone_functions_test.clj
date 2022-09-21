@@ -288,6 +288,10 @@
           (is (= #{[2006] [2010] [2014]}
                  (set (test-date-extract {:expressions {"expr" [:date-add [:field field-id nil] 2 :year]}
                                           :aggregation [[:get-year [:expression "expr"]]]})))))))))
+(defmacro ^:private with-report-timezeone
+  [tz & body]
+  `(mt/with-temporary-setting-values [:report-timezone ~tz]
+     ~@body))
 (deftest tz-timezone-test
   (mt/test-drivers (mt/normal-drivers-with-feature :date-functions)
     (mt/dataset times-mixed
