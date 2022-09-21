@@ -344,7 +344,8 @@
 
 
 (deftest tz-timezone-test
-  (mt/test-drivers (mt/normal-drivers-with-feature :date-functions)
+  (mt/test-drivers (disj (mt/normal-drivers-with-feature :date-functions) :h2)
+  ;;(mt/test-drivers #{:postgres}
     (mt/dataset times-mixed
       (testing "convertTimezone(column, to) tests"
         (testing "without report-timezone set"
@@ -354,9 +355,9 @@
                                        :limit       1})))))
         (testing "dt column should have the same instant but added a tz"
           (is (= "2004-03-19T03:19:09+01:00"
-                  (with-report-timezeone "Africa/Bangui"
-                                  (test-date-convert {:fields [[:field (mt/id :times :dt_tz) nil]]
-                                                      :limit 1})))))))))
+                 (with-report-timezeone "Africa/Bangui"
+                   (test-date-convert {:fields [[:field (mt/id :times :dt_tz) nil]]
+                                       :limit 1})))))))))
 
 
 #_(mt/with-driver :postgres
