@@ -624,6 +624,8 @@
   [driver [_ arg to from]]
   (let [from (or from (qp.timezone/report-timezone-id-if-supported driver))]
     (cond-> (->honeysql driver arg)
+      true
+      hx/->timestamp-with-time-zone
       from
       (->AtTimeZone from)
       to

@@ -56,6 +56,10 @@
        (t/format "yyyy-MM-dd HH:mm:ss" (t/local-date-time t)) ;; as_dt
        (t/format "yyyy-MM-dd" (t/local-date t))])]])          ;; as_d
 
+;;; +----------------------------------------------------------------------------------------------------------------+
+;;; |                                              Date extract tests                                                |
+;;; +----------------------------------------------------------------------------------------------------------------+
+
 (def ^:private date-extraction-op->-unit
   {:get-second      :second-of-minute
    :get-minute      :minute-of-hour
@@ -73,48 +77,48 @@
 (deftest extraction-function-tests
   (mt/dataset times-mixed
     (mt/test-drivers (disj (mt/normal-drivers-with-feature :date-functions) :mongo)
-      (testing "with datetime columns"
-        (doseq [[col-type field-id] [[:datetime (mt/id :times :dt)] [:text-as-datetime (mt/id :times :as_dt)]]]
-          (doseq [op [:get-year :get-quarter :get-month :get-day :get-day-of-week :get-hour :get-minute :get-second]]
-              (doseq [[expected query]
-                      [[[[(extract op #t "2004-03-19 09:19:09")] [(extract op #t "2008-06-20 10:20:10")]
-                         [(extract op #t "2012-11-21 11:21:11")] [(extract op #t "2012-11-21 11:21:11")]]
-                        {:expressions {"expr" [op [:field field-id nil]]}
-                         :fields      [[:expression "expr"]]}]
+     (testing "with datetime columns"
+       (doseq [[col-type field-id] [[:datetime (mt/id :times :dt)] [:text-as-datetime (mt/id :times :as_dt)]]]
+         (doseq [op [:get-year :get-quarter :get-month :get-day :get-day-of-week :get-hour :get-minute :get-second]]
+             (doseq [[expected query]
+                     [[[[(extract op #t "2004-03-19 09:19:09")] [(extract op #t "2008-06-20 10:20:10")]
+                        [(extract op #t "2012-11-21 11:21:11")] [(extract op #t "2012-11-21 11:21:11")]]
+                       {:expressions {"expr" [op [:field field-id nil]]}
+                        :fields      [[:expression "expr"]]}]
 
-                       [[[(extract op #t "2004-03-19 09:19:09")] [(extract op #t "2008-06-20 10:20:10")]
+                      [[[(extract op #t "2004-03-19 09:19:09")] [(extract op #t "2008-06-20 10:20:10")]
 
-                         [(extract op #t "2012-11-21 11:21:11")] [(extract op #t "2012-11-21 11:21:11")]]
-                        {:aggregation [[op [:field field-id nil]]]}]
+                        [(extract op #t "2012-11-21 11:21:11")] [(extract op #t "2012-11-21 11:21:11")]]
+                       {:aggregation [[op [:field field-id nil]]]}]
 
-                       [(into [] (frequencies [(extract op #t "2004-03-19 09:19:09") (extract op #t "2008-06-20 10:20:10")
-                                               (extract op #t "2012-11-21 11:21:11") (extract op #t "2012-11-21 11:21:11")]))
-                        {:expressions {"expr" [op [:field field-id nil]]}
-                         :aggregation [[:count]]
-                         :breakout    [[:expression "expr"]]}]]]
-                (testing (format "%s function works as expected on %s column for driver %s" op col-type driver/*driver*)
-                  (is (= (set expected) (set (test-date-extract query)))))))))
+                      [(into [] (frequencies [(extract op #t "2004-03-19 09:19:09") (extract op #t "2008-06-20 10:20:10")
+                                              (extract op #t "2012-11-21 11:21:11") (extract op #t "2012-11-21 11:21:11")]))
+                       {:expressions {"expr" [op [:field field-id nil]]}
+                        :aggregation [[:count]]
+                        :breakout    [[:expression "expr"]]}]]]
+               (testing (format "%s function works as expected on %s column for driver %s" op col-type driver/*driver*)
+                 (is (= (set expected) (set (test-date-extract query)))))))))
 
-      (testing "with date columns"
-        (doseq [[col-type field-id] [[:date (mt/id :times :d)] [:text-as-date (mt/id :times :as_d)]]]
-          (doseq [op [:get-year :get-quarter :get-month :get-day :get-day-of-week]]
-              (doseq [[expected query]
-                      [[[[(extract op #t "2004-03-19 09:19:09")] [(extract op #t "2008-06-20 10:20:10")]
-                         [(extract op #t "2012-11-21 11:21:11")] [(extract op #t "2012-11-21 11:21:11")]]
-                        {:expressions {"expr" [op [:field field-id nil]]}
-                         :fields      [[:expression "expr"]]}]
+     (testing "with date columns"
+       (doseq [[col-type field-id] [[:date (mt/id :times :d)] [:text-as-date (mt/id :times :as_d)]]]
+         (doseq [op [:get-year :get-quarter :get-month :get-day :get-day-of-week]]
+             (doseq [[expected query]
+                     [[[[(extract op #t "2004-03-19 09:19:09")] [(extract op #t "2008-06-20 10:20:10")]
+                        [(extract op #t "2012-11-21 11:21:11")] [(extract op #t "2012-11-21 11:21:11")]]
+                       {:expressions {"expr" [op [:field field-id nil]]}
+                        :fields      [[:expression "expr"]]}]
 
-                       [[[(extract op #t "2004-03-19 09:19:09")] [(extract op #t "2008-06-20 10:20:10")]
-                         [(extract op #t "2012-11-21 11:21:11")] [(extract op #t "2012-11-21 11:21:11")]]
-                        {:aggregation [[op [:field field-id nil]]]}]
+                      [[[(extract op #t "2004-03-19 09:19:09")] [(extract op #t "2008-06-20 10:20:10")]
+                        [(extract op #t "2012-11-21 11:21:11")] [(extract op #t "2012-11-21 11:21:11")]]
+                       {:aggregation [[op [:field field-id nil]]]}]
 
-                       [(into [] (frequencies [(extract op #t "2004-03-19 09:19:09") (extract op #t "2008-06-20 10:20:10")
-                                               (extract op #t "2012-11-21 11:21:11") (extract op #t "2012-11-21 11:21:11")]))
-                        {:expressions {"expr" [op [:field field-id nil]]}
-                         :aggregation [[:count]]
-                         :breakout    [[:expression "expr"]]}]]]
-                (testing (format "%s function works as expected on %s column for driver %s" op col-type driver/*driver*)
-                  (is (= (set expected) (set (test-date-extract query))))))))))
+                      [(into [] (frequencies [(extract op #t "2004-03-19 09:19:09") (extract op #t "2008-06-20 10:20:10")
+                                              (extract op #t "2012-11-21 11:21:11") (extract op #t "2012-11-21 11:21:11")]))
+                       {:expressions {"expr" [op [:field field-id nil]]}
+                        :aggregation [[:count]]
+                        :breakout    [[:expression "expr"]]}]]]
+               (testing (format "%s function works as expected on %s column for driver %s" op col-type driver/*driver*)
+                 (is (= (set expected) (set (test-date-extract query))))))))))
 
     ;; need to have seperate tests for mongo because it doesn't have supports for casting yet
     (mt/test-driver :mongo
@@ -151,6 +155,10 @@
                        :breakout    [[:expression "expr"]]}]]]
               (testing (format "%s function works as expected on %s column for driver %s" op col-type driver/*driver*)
                 (is (= (set expected) (set (test-date-extract query))))))))))))
+
+;;; +----------------------------------------------------------------------------------------------------------------+
+;;; |                                               Date math tests                                                  |
+;;; +----------------------------------------------------------------------------------------------------------------+
 
 (defn- date-math
   [op x amount unit col-type]
@@ -288,25 +296,80 @@
           (is (= #{[2006] [2010] [2014]}
                  (set (test-date-extract {:expressions {"expr" [:date-add [:field field-id nil] 2 :year]}
                                           :aggregation [[:get-year [:expression "expr"]]]})))))))))
+
+;;; +----------------------------------------------------------------------------------------------------------------+
+;;; |                                           Convert Timezone tests                                               |
+;;; +----------------------------------------------------------------------------------------------------------------+
+
 (defmacro ^:private with-report-timezeone
   [tz & body]
   `(mt/with-temporary-setting-values [:report-timezone ~tz]
      ~@body))
+
+(defn- test-date-convert
+  [{:keys [aggregation breakout expressions fields limit]}]
+  (if breakout
+    (->> (mt/run-mbql-query times {:expressions expressions
+                                   :aggregation aggregation
+                                   :limit       limit
+                                   :breakout    breakout})
+         mt/rows
+         ffirst)
+    (->> (mt/run-mbql-query times {:expressions expressions
+                                   :aggregation aggregation
+                                   :limit       limit
+                                   :fields      fields})
+         mt/rows
+         ffirst)))
+
+#_(with-report-timezeone "America/Los_Angeles"
+    (mt/with-driver :postgres
+      (mt/dataset times-mixed
+                  (mt/rows (mt/process-query
+                             (mt/mbql-query times
+                                            {:aggregation [[:convert-timezone [:field (mt/id :times :dt) nil] "Asia/Tokyo"]]}))))))
+
+#_(mt/with-driver :postgres
+    (mt/dataset times-mixed
+                  (mt/rows (mt/process-query
+                             (mt/mbql-query times
+                                            {:aggregation [[:convert-timezone [:field (mt/id :times :dt) nil] "Asia/Tokyo"]]})))))
+
+#_(with-report-timezeone "Asia/Tokyo"
+    (mt/with-driver :postgres
+      (mt/dataset times-mixed
+                    (mt/rows (mt/process-query
+                               (mt/mbql-query times
+                                              {:fields [[:field (mt/id :times :dt) nil]]}))))))
+
+
 (deftest tz-timezone-test
   (mt/test-drivers (mt/normal-drivers-with-feature :date-functions)
     (mt/dataset times-mixed
-      (testing "dt_tz column should have instant changed"
-        (is (= "2004-03-19T03:19:09+01:00"
-                (with-report-timezeone "Africa/Bangui"
-                                (ffirst (mt/rows (mt/process-query
-                                                   (mt/mbql-query times
-                                                                  {:fields [[:field (mt/id :times :dt_tz) nil]]
-                                                                   :limit 1}))))))))
-      (testing "dt column should have the same instant but added a tz"
-        (is (= "2004-03-19T09:19:09+01:00"
-                (with-report-timezeone "Africa/Bangui"
-                                (ffirst (mt/rows (mt/process-query
-                                                   (mt/mbql-query times
-                                                                  {:fields [[:field (mt/id :times :dt) nil]]
-                                                                   :limit 1})))))))))))
+      (testing "convertTimezone(column, to) tests"
+        (testing "without report-timezone set"
+          (testing "dt_tz column should have instant changed"
+            (is (= "2004-03-19T18:19:09Z"
+                   (test-date-convert {:aggregation [[:convert-timezone [:field (mt/id :times :dt) nil] "Asia/Tokyo"]]
+                                       :limit       1})))))
+        (testing "dt column should have the same instant but added a tz"
+          (is (= "2004-03-19T03:19:09+01:00"
+                  (with-report-timezeone "Africa/Bangui"
+                                  (test-date-convert {:fields [[:field (mt/id :times :dt_tz) nil]]
+                                                      :limit 1})))))))))
 
+
+#_(mt/with-driver :postgres
+    (mt/dataset times-mixed
+                (mt/rows (mt/process-query
+                           (mt/mbql-query times
+                                          {:fields [[:field (mt/id :times :dt_tz) nil]]})))))
+
+
+
+
+(defn- convert-timezone
+ ([s to]
+  (convert-timezone s to "UTC"))
+ ([s to from]
+  (t/with-zone-same-instant (u.date/parse s (or from "UTC")) to)))
