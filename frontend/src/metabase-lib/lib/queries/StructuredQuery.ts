@@ -249,6 +249,11 @@ class StructuredQueryInner extends AtomicQuery {
     return this.query()?.["source-table"];
   }
 
+  sourceTable(): Table | null | undefined {
+    const tableId = this.sourceTableId();
+    return tableId != null ? this._metadata.table(tableId) : null;
+  }
+
   /**
    * @returns a new query with the provided Table ID set.
    */
@@ -1471,8 +1476,7 @@ class StructuredQueryInner extends AtomicQuery {
    * Returns the "first" of the nested queries, or this query it not nested
    */
   rootQuery(): StructuredQuery {
-    const sourceQuery = this.sourceQuery();
-    return sourceQuery ? sourceQuery.rootQuery() : this;
+    return this;
   }
 
   /**
@@ -1741,6 +1745,10 @@ class NestedStructuredQuery extends StructuredQuery {
       datasetQuery,
       this._parent,
     );
+  }
+
+  rootQuery(): StructuredQuery {
+    return this.parentQuery().rootQuery();
   }
 
   parentQuery() {

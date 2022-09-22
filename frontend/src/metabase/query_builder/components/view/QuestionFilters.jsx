@@ -25,12 +25,14 @@ export default function QuestionFilters({
   expanded,
   onExpand,
   onCollapse,
+  onQueryChange,
 }) {
   const query = question.query();
   const filters = query.topLevelFilters();
   if (filters.length === 0) {
     return null;
   }
+
   return (
     <div className={className}>
       <div className="flex flex-wrap align-center mbn1 mrn1">
@@ -56,7 +58,7 @@ export default function QuestionFilters({
               key={index}
               triggerElement={
                 <FilterPill
-                  onRemove={() => filter.remove().update(null, { run: true })}
+                  onRemove={() => onQueryChange(filter.remove().rootQuery())}
                 >
                   {filter.displayName()}
                 </FilterPill>
@@ -69,7 +71,7 @@ export default function QuestionFilters({
                 query={query}
                 filter={filter}
                 onChangeFilter={newFilter =>
-                  newFilter.replace().update(null, { run: true })
+                  onQueryChange(newFilter.replace().rootQuery())
                 }
                 className="scroll-y"
               />
@@ -86,6 +88,7 @@ export function FilterHeaderToggle({
   onExpand,
   expanded,
   onCollapse,
+  onQueryChange,
 }) {
   const query = question.query();
   const filters = query.topLevelFilters();
@@ -110,7 +113,7 @@ export function FilterHeaderToggle({
   );
 }
 
-export function FilterHeader({ question, expanded }) {
+export function FilterHeader({ question, expanded, onQueryChange }) {
   const query = question.query();
   const filters = query.topLevelFilters();
   if (filters.length === 0 || !expanded) {
@@ -124,7 +127,7 @@ export function FilterHeader({ question, expanded }) {
             key={index}
             triggerElement={
               <FilterPill
-                onRemove={() => filter.remove().update(null, { run: true })}
+                onRemove={() => onQueryChange(filter.remove().rootQuery())}
               >
                 {filter.displayName()}
               </FilterPill>
@@ -137,7 +140,7 @@ export function FilterHeader({ question, expanded }) {
               query={query}
               filter={filter}
               onChangeFilter={newFilter =>
-                newFilter.replace().update(null, { run: true })
+                onQueryChange(newFilter.replace().rootQuery())
               }
               className="scroll-y"
             />
