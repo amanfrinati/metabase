@@ -128,6 +128,10 @@
   [_ _ expr]
   expr)
 
+(defmethod sql.qp/date [:sqlserver :second-of-minute]
+  [_ _ expr]
+  (date-part :second expr))
+
 (defmethod sql.qp/date [:sqlserver :minute]
   [_ _ expr]
   (hx/maybe-cast :smalldatetime expr))
@@ -203,6 +207,10 @@
     (hx/year expr)
     (hsql/call :DateFromParts (hx/year expr) 1 1)))
 
+(defmethod sql.qp/date [:sqlserver :yyear]
+  [_ _ expr]
+  (date-part :year expr))
+
 (defmethod sql.qp/add-interval-honeysql-form :sqlserver
   [_ hsql-form amount unit]
   (date-add unit amount hsql-form))
@@ -216,41 +224,20 @@
 
 ;; date extraction functions
 
-(defmethod sql.qp/->honeysql [:sqlserver :get-year]
-  [driver [_ arg]]
-  (date-part :year (sql.qp/->honeysql driver arg)))
+(def ^:private date-extraction-op->unit
+  {:second      :second-of-minute
+   :minute      :minute-of-hour
+   :hour        :hour-of-day
+   :day-of-week :day-of-week
+   :day         :day-of-month
+   :week        :week-of-year
+   :month       :month-of-year
+   :quarter     :quarter-of-year
+   :year        :yyear})
 
-(defmethod sql.qp/->honeysql [:sqlserver :get-quarter]
-  [driver [_ arg]]
-  (sql.qp/date driver :quarter-of-year (sql.qp/->honeysql driver arg)))
-
-(defmethod sql.qp/->honeysql [:sqlserver :get-month]
-  [driver [_ arg]]
-  (sql.qp/date driver :month-of-year (sql.qp/->honeysql driver arg)))
-
-(defmethod sql.qp/->honeysql [:sqlserver :get-day]
-  [driver [_ arg]]
-  (sql.qp/date driver :day-of-month (sql.qp/->honeysql driver arg)))
-
-(defmethod sql.qp/->honeysql [:sqlserver :get-day-of-week]
-  [driver [_ arg]]
-  (sql.qp/date driver :day-of-week (sql.qp/->honeysql driver arg)))
-
-(defmethod sql.qp/->honeysql [:sqlserver :get-hour]
-  [driver [_ arg]]
-  (sql.qp/date driver :hour-of-day (sql.qp/->honeysql driver arg)))
-
-(defmethod sql.qp/->honeysql [:sqlserver :get-minute]
-  [driver [_ arg]]
-  (sql.qp/date driver :minute-of-hour (sql.qp/->honeysql driver arg)))
-
-(defmethod sql.qp/->honeysql [:sqlserver :get-minute]
-  [driver [_ arg]]
-  (sql.qp/date driver :minute-of-hour (sql.qp/->honeysql driver arg)))
-
-(defmethod sql.qp/->honeysql [:sqlserver :get-second]
-  [driver [_ arg]]
-  (date-part :second (sql.qp/->honeysql driver arg)))
+(defmethod sql.qp/->honeysql [:sqlserver :datetime-extract]
+  [driver [_ arg unit]]
+  (sql.qp/date driver (date-extraction-op->unit unit) (sql.qp/->honeysql driver arg)))
 
 (defmethod sql.qp/cast-temporal-string [:sqlserver :Coercion/ISO8601->DateTime]
   [_driver _semantic_type expr]

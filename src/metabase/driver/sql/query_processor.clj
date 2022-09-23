@@ -571,14 +571,16 @@
 
 ;; date extraction functions
 (defmethod ->honeysql [:sql :datetime-extract]
-  [driver [_ unit arg]]
+  [driver [_ arg unit]]
   (let [form (->honeysql driver arg)]
    (case unit
      :year         (hx/year form)
      :quarter      (hx/quarter form)
      :month        (hx/month form)
+     :week         (date driver :week-of-year form)
      :day          (hx/day form)
      :day-of-week  (date driver :day-of-week form)
+     :hour         (hx/hour form)
      :minute       (hx/minute form)
      :second       (hx/second form))))
 

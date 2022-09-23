@@ -78,6 +78,11 @@
    (apply s/enum datetime-bucketing-units)
    "datetime-bucketing-unit"))
 
+(def DateExtractUnits
+  (s/named
+    (apply s/enum #{:second :minute :hour :day :day-of-week :week :month :quarter :year})
+    "date-extract-units"))
+
 (def ^:private RelativeDatetimeUnit
   (s/named
    (apply s/enum #{:default :minute :hour :day :week :month :quarter :year})
@@ -465,7 +470,7 @@
 (def date-extract-functions
   "Functions to extract components of a date, datetime."
   #{;; extraction functions (get some component of a given temporal value/column)
-    :get-year :get-quarter :get-month :get-day :get-day-of-week :get-hour :get-minute :get-second})
+    :datetime-extract})
 
 (def date+time+timezone-functions
   "Date, time, and timezone related functions."
@@ -614,6 +619,10 @@
   "Schema for the definition of an arithmetic expression."
   (s/recursive #'ArithmeticExpression*))
 
+(defclause ^{:requires-features #{:date-extraction}} datetime-extract
+  datetime DateTimeExpressionArg
+  unit     DateExtractUnits)
+
 (defclause ^{:requires-features #{:date-extraction}} get-year
   date DateTimeExpressionArg)
 
@@ -639,7 +648,7 @@
   datetime DateTimeExpressionArg)
 
 (def ^:private DatetimeExpression*
-  (one-of get-year get-quarter get-month get-day get-day-of-week get-hour get-minute get-second))
+  (one-of datetime-extract get-year get-quarter get-month get-day get-day-of-week get-hour get-minute get-second))
 
 (def ^:private DatetimeExpression
   "Schema for the definition of a date function expression."
@@ -896,7 +905,7 @@
     ArithmeticExpression
     (one-of count avg cum-count cum-sum distinct stddev sum min max metric share count-where
             sum-where case median percentile ag:var
-            get-year get-quarter get-month get-day get-day-of-week get-hour get-minute get-second)))
+            datetime-extract get-quarter get-month get-day get-day-of-week get-hour get-minute get-second)))
 
 (def ^:private UnnamedAggregation
   (s/recursive #'UnnamedAggregation*))

@@ -371,51 +371,36 @@
     ;; for datetimes or anything without a known temporal type, cast to timestamp and go from there
     (recur unit (->temporal-type :timestamp expr))))
 
-(defmethod sql.qp/date [:bigquery-cloud-sdk :minute]          [_ _ expr] (trunc   :minute    expr))
-(defmethod sql.qp/date [:bigquery-cloud-sdk :minute-of-hour]  [_ _ expr] (extract :minute    expr))
-(defmethod sql.qp/date [:bigquery-cloud-sdk :hour]            [_ _ expr] (trunc   :hour      expr))
-(defmethod sql.qp/date [:bigquery-cloud-sdk :hour-of-day]     [_ _ expr] (extract :hour      expr))
-(defmethod sql.qp/date [:bigquery-cloud-sdk :day]             [_ _ expr] (trunc   :day       expr))
-(defmethod sql.qp/date [:bigquery-cloud-sdk :day-of-month]    [_ _ expr] (extract :day       expr))
-(defmethod sql.qp/date [:bigquery-cloud-sdk :day-of-year]     [_ _ expr] (extract :dayofyear expr))
-(defmethod sql.qp/date [:bigquery-cloud-sdk :month]           [_ _ expr] (trunc   :month     expr))
-(defmethod sql.qp/date [:bigquery-cloud-sdk :month-of-year]   [_ _ expr] (extract :month     expr))
-(defmethod sql.qp/date [:bigquery-cloud-sdk :quarter]         [_ _ expr] (trunc   :quarter   expr))
-(defmethod sql.qp/date [:bigquery-cloud-sdk :quarter-of-year] [_ _ expr] (extract :quarter   expr))
-(defmethod sql.qp/date [:bigquery-cloud-sdk :year]            [_ _ expr] (trunc   :year      expr))
+(defmethod sql.qp/date [:bigquery-cloud-sdk :second-of-minute] [_ _ expr] (extract :second    expr))
+(defmethod sql.qp/date [:bigquery-cloud-sdk :minute]           [_ _ expr] (trunc   :minute    expr))
+(defmethod sql.qp/date [:bigquery-cloud-sdk :minute-of-hour]   [_ _ expr] (extract :minute    expr))
+(defmethod sql.qp/date [:bigquery-cloud-sdk :hour]             [_ _ expr] (trunc   :hour      expr))
+(defmethod sql.qp/date [:bigquery-cloud-sdk :hour-of-day]      [_ _ expr] (extract :hour      expr))
+(defmethod sql.qp/date [:bigquery-cloud-sdk :day]              [_ _ expr] (trunc   :day       expr))
+(defmethod sql.qp/date [:bigquery-cloud-sdk :day-of-month]     [_ _ expr] (extract :day       expr))
+(defmethod sql.qp/date [:bigquery-cloud-sdk :day-of-year]      [_ _ expr] (extract :dayofyear expr))
+(defmethod sql.qp/date [:bigquery-cloud-sdk :month]            [_ _ expr] (trunc   :month     expr))
+(defmethod sql.qp/date [:bigquery-cloud-sdk :month-of-year]    [_ _ expr] (extract :month     expr))
+(defmethod sql.qp/date [:bigquery-cloud-sdk :quarter]          [_ _ expr] (trunc   :quarter   expr))
+(defmethod sql.qp/date [:bigquery-cloud-sdk :quarter-of-year]  [_ _ expr] (extract :quarter   expr))
+(defmethod sql.qp/date [:bigquery-cloud-sdk :year]             [_ _ expr] (trunc   :year      expr))
+(defmethod sql.qp/date [:bigquery-cloud-sdk :yyear]            [_ _ expr] (extract :year      expr))
 
 ;; date extraction functions
-(defmethod sql.qp/->honeysql [:bigquery-cloud-sdk :get-year]
-  [driver [_ arg]]
-  (extract :year (sql.qp/->honeysql driver arg)))
+(def ^:private date-extraction-op->unit
+  {:second      :second-of-minute
+   :minute      :minute-of-hour
+   :hour        :hour-of-day
+   :day-of-week :day-of-week
+   :day         :day-of-month
+   :week        :week-of-year
+   :month       :month-of-year
+   :quarter     :quarter-of-year
+   :year        :yyear})
 
-(defmethod sql.qp/->honeysql [:bigquery-cloud-sdk :get-quarter]
-  [driver [_ arg]]
-  (sql.qp/date driver :quarter-of-year (sql.qp/->honeysql driver arg)))
-
-(defmethod sql.qp/->honeysql [:bigquery-cloud-sdk :get-month]
-  [driver [_ arg]]
-  (sql.qp/date driver :month-of-year (sql.qp/->honeysql driver arg)))
-
-(defmethod sql.qp/->honeysql [:bigquery-cloud-sdk :get-day]
-  [driver [_ arg]]
-  (sql.qp/date driver :day-of-month (sql.qp/->honeysql driver arg)))
-
-(defmethod sql.qp/->honeysql [:bigquery-cloud-sdk :get-day-of-week]
-  [driver [_ arg]]
-  (sql.qp/date driver :day-of-week (sql.qp/->honeysql driver arg)))
-
-(defmethod sql.qp/->honeysql [:bigquery-cloud-sdk :get-hour]
-  [driver [_ arg]]
-  (sql.qp/date driver :hour-of-day (sql.qp/->honeysql driver arg)))
-
-(defmethod sql.qp/->honeysql [:bigquery-cloud-sdk :get-minute]
-  [driver [_ arg]]
-  (sql.qp/date driver :minute-of-hour (sql.qp/->honeysql driver arg)))
-
-(defmethod sql.qp/->honeysql [:bigquery-cloud-sdk :get-second]
-  [driver [_ arg]]
-  (extract :second (sql.qp/->honeysql driver arg)))
+(defmethod sql.qp/->honeysql [:bigquery-cloud-sdk :datetime-extract]
+  [driver [_ arg unit]]
+  (sql.qp/date driver (date-extraction-op->unit unit) (sql.qp/->honeysql driver arg)))
 
 ;; BigQuery mod is a function like mod(x, y) rather than an operator like x mod y
 (defmethod hformat/fn-handler (u/qualified-name ::mod)
