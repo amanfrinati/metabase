@@ -5,6 +5,5 @@ export type Series<TDatum, TSeriesInfo = unknown> = {
   seriesKey: string;
   xAccessor: (datum: TDatum) => XValue;
   yAccessor: (datum: TDatum) => yValue;
-  color: string;
   seriesInfo?: TSeriesInfo;
 };

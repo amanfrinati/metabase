@@ -2,17 +2,19 @@ import React, { useMemo, useState } from "react";
 import { Group } from "@visx/group";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { Line } from "@visx/shape";
-import { Series } from "./types/series";
-import { createStackedXScale, createXScale, createYScale } from "./utils/scale";
 import { scaleBand } from "@visx/scale";
 import type { Series as D3Series, SeriesPoint } from "d3-shape";
 import { stack, stackOffsetExpand, stackOffsetNone } from "d3-shape";
 import type { NumberValue, ScaleBand, ScaleLinear } from "d3-scale";
 import { Text } from "@visx/text";
 import { GridColumns } from "@visx/grid";
+import { Series } from "./types/series";
+import { createStackedXScale, createXScale, createYScale } from "./utils/scale";
 import { ChartTheme } from "./types/style";
 import { Margin } from "./types/margin";
 import { ChartBar } from "./RowChartView.styled";
+
+const MIN_TICKS_COUNT = 2;
 
 type StackingOffset = "none" | "expand";
 
@@ -42,6 +44,7 @@ interface RowChartViewProps<TDatum> {
   };
   theme: ChartTheme;
   margin: Margin;
+  seriesColors: Record<string, string>;
 }
 
 export type BarDimensions = {
@@ -63,13 +66,14 @@ const getNonStackedBar = <TDatum,>(
 ): BarDimensions | null => {
   const yValue = series.yAccessor(datum);
   const xValue = series.xAccessor(datum);
+  const isNegative = xValue != null && xValue < 0;
 
   if (xValue == null) {
     return null;
   }
 
-  const x = xScale(0);
-  const width = Math.abs(xScale(xValue) - x);
+  const x = xScale(isNegative ? xValue : 0);
+  const width = Math.abs(xScale(isNegative ? 0 : xValue) - x);
 
   const height = innerBarScale?.bandwidth() ?? yScale.bandwidth();
   const innerY = innerBarScale?.(seriesIndex) ?? 0;
@@ -120,6 +124,7 @@ export const RowChartView = <TDatum,>({
   yTickFormatter,
   xTickFormatter,
   onHoverChange,
+  seriesColors,
   onClick,
 }: RowChartViewProps<TDatum>) => {
   const [hoveredSeriesIndex, setHoveredSeriesIndex] = useState<number | null>();
@@ -183,11 +188,20 @@ export const RowChartView = <TDatum,>({
   };
 
   const goalLineValue = xScale(goal?.value ?? 0);
+  const xTicksCount = Math.max(
+    MIN_TICKS_COUNT,
+    Math.floor(xMax / theme.axis.minTicksInterval),
+  );
 
   return (
     <svg width={width} height={height}>
       <Group top={margin.top} left={margin.left}>
-        <GridColumns scale={xScale} height={yMax} stroke={theme.grid.color} />
+        <GridColumns
+          scale={xScale}
+          height={yMax}
+          stroke={theme.grid.color}
+          numTicks={xTicksCount}
+        />
         <AxisLeft
           tickFormat={yTickFormatter}
           hideTicks
@@ -205,8 +219,7 @@ export const RowChartView = <TDatum,>({
         />
         <AxisBottom
           hideTicks
-          // TODO: calculate
-          numTicks={5}
+          numTicks={xTicksCount}
           tickFormat={xTickFormatter}
           top={yMax}
           scale={xScale}
@@ -237,7 +250,7 @@ export const RowChartView = <TDatum,>({
               );
             }
 
-            if (!bar) {
+            if (bar?.value == null) {
               return null;
             }
 
@@ -246,6 +259,7 @@ export const RowChartView = <TDatum,>({
             const hasSeriesHover = hoveredSeriesIndex != null;
             const isSeriesHovered = hoveredSeriesIndex === seriesIndex;
             const opacity = isSeriesHovered || !hasSeriesHover ? 1 : 0.6;
+            const isNegative = value < 0;
 
             const isLabelVisible =
               shouldShowLabels &&
@@ -255,12 +269,12 @@ export const RowChartView = <TDatum,>({
             return (
               <>
                 <ChartBar
-                  key={`${seriesIndex}:${datumIndex}`}
+                  key={`${series.seriesKey}:${datumIndex}`}
                   x={x}
                   y={y}
                   width={width}
                   height={height}
-                  fill={series.color}
+                  fill={seriesColors[series.seriesKey]}
                   opacity={opacity}
                   onClick={event => handleClick(event, seriesIndex, datumIndex)}
                   onMouseEnter={() =>
@@ -274,7 +288,7 @@ export const RowChartView = <TDatum,>({
                     fill={theme.dataLabels.color}
                     fontWeight={theme.dataLabels.weight}
                     dx="0.33em"
-                    x={x + width}
+                    x={isNegative ? x : x + width}
                     y={y + height / 2}
                     verticalAnchor="middle"
                   >

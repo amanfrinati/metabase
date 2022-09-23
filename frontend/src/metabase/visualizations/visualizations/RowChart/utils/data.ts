@@ -23,7 +23,7 @@ export type MetricDatum = { [key: MetricName]: MetricValue };
 export type SeriesInfo = {
   metricColumn: DatasetColumn;
   dimensionColumn: DatasetColumn;
-  breakoutValue: RowValue;
+  breakoutValue?: RowValue;
 };
 
 export type GroupedDatum = {
@@ -172,7 +172,6 @@ const getBreakoutSeries = (
   breakoutValues: RowValue[],
   metric: ColumnDescriptor,
   dimension: ColumnDescriptor,
-  colors: string[],
 ): Series<GroupedDatum, SeriesInfo>[] => {
   return breakoutValues.map((breakoutValue, seriesIndex) => {
     const breakoutName = String(breakoutValue);
@@ -181,7 +180,6 @@ const getBreakoutSeries = (
       yAccessor: (datum: GroupedDatum) => String(datum.dimensionValue),
       xAccessor: (datum: GroupedDatum) =>
         datum.breakout?.[breakoutName]?.[metric.column.name] ?? null,
-      color: colors[seriesIndex % colors.length],
       seriesInfo: {
         metricColumn: metric.column,
         dimensionColumn: dimension.column,
@@ -194,14 +192,12 @@ const getBreakoutSeries = (
 const getMultipleMetricSeries = (
   dimension: ColumnDescriptor,
   metrics: ColumnDescriptor[],
-  colors: string[],
 ): Series<GroupedDatum, SeriesInfo>[] => {
   return metrics.map((metric, seriesIndex) => {
     return {
       seriesKey: metric.column.name,
       yAccessor: (datum: GroupedDatum) => String(datum.dimensionValue),
       xAccessor: (datum: GroupedDatum) => datum.metrics[metric.column.name],
-      color: colors[seriesIndex % colors.length],
       seriesInfo: {
         dimensionColumn: dimension.column,
         metricColumn: metric.column,
@@ -213,7 +209,6 @@ const getMultipleMetricSeries = (
 export const getSeries = (
   data: DatasetData,
   chartColumns: ChartColumns,
-  colors: string[],
 ): Series<GroupedDatum, SeriesInfo>[] => {
   if ("breakout" in chartColumns) {
     const breakoutValues = getBreakoutDistinctValues(
@@ -225,13 +220,8 @@ export const getSeries = (
       breakoutValues,
       chartColumns.metric,
       chartColumns.dimension,
-      colors,
     );
   }
 
-  return getMultipleMetricSeries(
-    chartColumns.dimension,
-    chartColumns.metrics,
-    colors,
-  );
+  return getMultipleMetricSeries(chartColumns.dimension, chartColumns.metrics);
 };

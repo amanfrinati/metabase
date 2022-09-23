@@ -8,6 +8,7 @@ export type ChartFont = {
 export type ChartTheme = {
   axis: {
     color: string;
+    minTicksInterval: number;
     ticks: ChartFont;
   };
   dataLabels: ChartFont;

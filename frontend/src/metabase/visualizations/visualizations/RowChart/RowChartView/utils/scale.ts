@@ -1,7 +1,7 @@
 import { scaleBand, scaleLinear } from "@visx/scale";
+import type { Series as D3Series } from "d3-shape";
 import { Series } from "../types/series";
 import { createStackedXDomain, createXDomain, createYDomain } from "./domain";
-import type { Series as D3Series } from "d3-shape";
 
 export const createYScale = <TDatum>(
   data: TDatum[],

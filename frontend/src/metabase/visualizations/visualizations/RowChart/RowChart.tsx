@@ -1,15 +1,16 @@
 import React, { useCallback, useMemo } from "react";
 import { t } from "ttag";
 
+import { getIn } from "icepick";
+import _ from "underscore";
 import {
   GRAPH_DATA_SETTINGS,
-  STACKABLE_SETTINGS,
   GRAPH_GOAL_SETTINGS,
   GRAPH_COLORS_SETTINGS,
   GRAPH_AXIS_SETTINGS,
   GRAPH_DISPLAY_VALUES_SETTINGS,
 } from "metabase/visualizations/lib/settings/graph";
-import { RowChartView } from "./RowChartView/RowChartView";
+import { getColorsForValues } from "metabase/lib/colors/charts";
 import {
   getGroupedDataset,
   getSeries,
@@ -22,9 +23,10 @@ import {
   RowValue,
   VisualizationSettings,
 } from "metabase-types/api";
-import { ChartTheme } from "./RowChartView/types/style";
 import { color } from "metabase/lib/colors";
 import { isDimension, isMetric } from "metabase/lib/schema_metadata";
+import { RowChartView } from "./RowChartView/RowChartView";
+import { ChartTheme } from "./RowChartView/types/style";
 import { getMaxYValuesCount } from "./utils/layout";
 import { getChartMargin, getMaxWidth } from "./utils/margin";
 import { Margin } from "./RowChartView/types/margin";
@@ -33,12 +35,15 @@ import { getClickData } from "./utils/events";
 import { getFormatters } from "./utils/format";
 import { getStackingOffset } from "./utils/stacking";
 import { getChartGoal } from "./utils/goal";
+import { getChartTheme } from "./utils/theme";
+import { getSeriesColors } from "./utils/colors";
 
 const MIN_BAR_HEIGHT = 24;
 
 type $FIXME = any;
 
 interface RowChartProps {
+  className: string;
   width: number;
   height: number;
   data: DatasetData;
@@ -47,36 +52,8 @@ interface RowChartProps {
   onVisualizationClick: $FIXME;
 }
 
-const getChartTheme = () => {
-  return {
-    axis: {
-      color: color("bg-dark"),
-      ticks: {
-        size: 12,
-        weight: 700,
-        color: color("bg-dark"),
-      },
-    },
-    goal: {
-      lineStroke: color("text-medium"),
-      label: {
-        size: 14,
-        weight: 700,
-        color: color("text-medium"),
-      },
-    },
-    dataLabels: {
-      weight: 700,
-      color: color("text-dark"),
-      size: 14,
-    },
-    grid: {
-      color: color("border"),
-    },
-  };
-};
-
 const RowChart = ({
+  className,
   width,
   height,
   settings,
@@ -85,18 +62,24 @@ const RowChart = ({
   onVisualizationClick,
   ...props
 }: RowChartProps) => {
+  console.log(">>>set", settings);
   const chartColumns = useMemo(
     () => getChartColumns(data, settings),
     [data, settings],
   );
-  const colors = useMemo(() => getAccentColors(), []);
+
   const groupedData = useMemo(
     () => getGroupedDataset(data, chartColumns),
     [chartColumns, data],
   );
   const series = useMemo(
-    () => getSeries(data, chartColumns, colors),
-    [chartColumns, colors, data],
+    () => getSeries(data, chartColumns),
+    [chartColumns, data],
+  );
+
+  const seriesColors = useMemo(
+    () => getSeriesColors(settings, series),
+    [series, settings],
   );
 
   const handleClick = (
@@ -154,20 +137,23 @@ const RowChart = ({
     settings["graph.show_values"] && stackingOffset !== "expand";
 
   return (
-    <RowChartView
-      margin={margin}
-      theme={theme}
-      width={width}
-      height={height}
-      data={trimmedData}
-      series={series}
-      goal={goal}
-      onClick={visualizationIsClickable ? handleClick : undefined}
-      yTickFormatter={yTickFormatter}
-      xTickFormatter={xTickFormatter}
-      shouldShowLabels={shouldShowLabels}
-      stackingOffset={stackingOffset}
-    />
+    <div className={className} style={{ overflow: "hidden" }}>
+      <RowChartView
+        margin={margin}
+        theme={theme}
+        width={width}
+        height={height}
+        data={trimmedData}
+        series={series}
+        goal={goal}
+        onClick={visualizationIsClickable ? handleClick : undefined}
+        yTickFormatter={yTickFormatter}
+        xTickFormatter={xTickFormatter}
+        shouldShowLabels={shouldShowLabels}
+        stackingOffset={stackingOffset}
+        seriesColors={seriesColors}
+      />
+    </div>
   );
 };
 
@@ -192,14 +178,19 @@ const stackingSettings = {
   },
 };
 
-RowChart.supportsSeries = true;
 RowChart.settings = {
   ...stackingSettings,
+  "graph.show_values": {
+    section: t`Display`,
+    title: t`Show values on data points`,
+    widget: "toggle",
+    getHidden: (_series: any[], vizSettings: VisualizationSettings) =>
+      vizSettings["stackable.stack_type"] === "normalized",
+    default: false,
+  },
   ...GRAPH_GOAL_SETTINGS,
-  ...GRAPH_COLORS_SETTINGS,
-  ...GRAPH_AXIS_SETTINGS,
-  ...GRAPH_DISPLAY_VALUES_SETTINGS,
   ...GRAPH_DATA_SETTINGS,
+  // ...GRAPH_AXIS_SETTINGS,
 };
 
 RowChart.isSensible = ({ cols, rows }: $FIXME) => {
@@ -226,6 +217,31 @@ RowChart.settings["graph.dimensions"] = {
   title: t`Y-axis`,
 };
 
-RowChart.seriesAreCompatible = () => true;
+/**
+ * Required to make it compatible with series settings without rewriting them fully
+ * It expands a single card + dataset into multiple "series" and sets _seriesKey which is needed for settings to work
+ */
+RowChart.transformSeries = (originalMultipleSeries: any) => {
+  const [series] = originalMultipleSeries;
+
+  if (series.card._transformed) {
+    return originalMultipleSeries;
+  }
+
+  const { card, data } = series;
+  const chartColumns = getChartColumns(data, card.visualization_settings);
+
+  return getSeries(data, chartColumns)
+    .map(s => s.seriesKey)
+    .map(seriesKey => {
+      const seriesCard = {
+        ...card,
+        name: seriesKey,
+        _seriesKey: seriesKey,
+        _transformed: true,
+      };
+      return { card: seriesCard, data };
+    });
+};
 
 export default RowChart;

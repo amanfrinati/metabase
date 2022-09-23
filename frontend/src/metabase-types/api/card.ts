@@ -29,6 +29,7 @@ export interface UnsavedCard {
 
 export type SeriesSettings = {
   title: string;
+  color?: string;
 };
 
 export type VisualizationSettings = {
