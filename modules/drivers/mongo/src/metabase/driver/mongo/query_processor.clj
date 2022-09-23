@@ -376,7 +376,7 @@
 (defmethod ->rvalue :concat    [[_ & args]] {"$concat" (mapv ->rvalue args)})
 (defmethod ->rvalue :substring [[_ & args]] {"$substrCP" (mapv ->rvalue args)})
 
-(def ^:private date-extraction-op->unit
+(def ^:private datetime-extract-unit->date-unit
   {:second      :second-of-minute
    :minute      :minute-of-hour
    :hour        :hour-of-day
@@ -388,7 +388,7 @@
    :year        :yyear})
 
 (defmethod ->rvalue :datetime-extract [[_ inp unit]]
-  (with-rvalue-temporal-bucketing (->rvalue inp) (date-extraction-op->unit unit)))
+  (with-rvalue-temporal-bucketing (->rvalue inp) (datetime-extract-unit->date-unit unit)))
 
 ;;; Intervals are not first class Mongo citizens, so they cannot be translated on their own.
 ;;; The only thing we can do with them is adding to or subtracting from a date valued expression.

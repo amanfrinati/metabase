@@ -200,22 +200,6 @@
    (driver.common/start-of-week-offset driver)
    (partial hsql/call (u/qualified-name ::mod))))
 
-;; date extraction functions
-(def ^:private date-extraction-op->unit
-  {:second      :second-of-minute
-   :minute      :minute-of-hour
-   :hour        :hour-of-day
-   :day-of-week :day-of-week
-   :day         :day-of-month
-   :week        :week-of-year
-   :month       :month-of-year
-   :quarter     :quarter-of-year
-   :year        :yyear})
-
-(defmethod sql.qp/->honeysql [:oracle :datetime-extract]
-  [driver [_ arg unit]]
-  (sql.qp/date driver (date-extraction-op->unit unit) (sql.qp/->honeysql driver arg)))
-
 (def ^:private now (hsql/raw "SYSDATE"))
 
 (defmethod sql.qp/current-datetime-honeysql-form :oracle [_] now)

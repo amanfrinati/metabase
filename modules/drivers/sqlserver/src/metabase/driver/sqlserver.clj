@@ -222,23 +222,6 @@
   ;; Work around this by converting the timestamps to minutes instead before calling DATEADD().
   (date-add :minute (hx// expr 60) (hx/literal "1970-01-01")))
 
-;; date extraction functions
-
-(def ^:private date-extraction-op->unit
-  {:second      :second-of-minute
-   :minute      :minute-of-hour
-   :hour        :hour-of-day
-   :day-of-week :day-of-week
-   :day         :day-of-month
-   :week        :week-of-year
-   :month       :month-of-year
-   :quarter     :quarter-of-year
-   :year        :yyear})
-
-(defmethod sql.qp/->honeysql [:sqlserver :datetime-extract]
-  [driver [_ arg unit]]
-  (sql.qp/date driver (date-extraction-op->unit unit) (sql.qp/->honeysql driver arg)))
-
 (defmethod sql.qp/cast-temporal-string [:sqlserver :Coercion/ISO8601->DateTime]
   [_driver _semantic_type expr]
   (hx/->datetime expr))

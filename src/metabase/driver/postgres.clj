@@ -286,10 +286,6 @@
    :quarter     :quarter-of-year
    :year        :yyear})
 
-(defmethod sql.qp/->honeysql [:postgres :datetime-extract]
-  [driver [_ arg unit]]
-  (sql.qp/date driver (date-extraction-op->unit unit) (sql.qp/->honeysql driver arg)))
-
 (defn- quoted? [database-type]
   (and (str/starts-with? database-type "\"")
        (str/ends-with? database-type "\"")))

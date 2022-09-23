@@ -128,6 +128,10 @@
   [driver _ expr]
   (->datetime (strftime "%Y-%m-%d %H:%M:%S" (sql.qp/->honeysql driver expr))))
 
+(defmethod sql.qp/date [:sqlite :second-of-minute]
+  [driver _ expr]
+  (hx/->integer (strftime "%S" (sql.qp/->honeysql driver expr))))
+
 (defmethod sql.qp/date [:sqlite :minute]
   [driver _ expr]
   (->datetime (strftime "%Y-%m-%d %H:%M" (sql.qp/->honeysql driver expr))))
@@ -209,21 +213,6 @@
 (defmethod sql.qp/date [:sqlite :yyear]
   [driver _ expr]
   (hx/->integer (strftime "%Y" (sql.qp/->honeysql driver expr))))
-
-(def ^:private date-extraction-op->unit
-  {:second      :second-of-minute
-   :minute      :minute-of-hour
-   :hour        :hour-of-day
-   :day-of-week :day-of-week
-   :day         :day-of-month
-   :week        :week-of-year
-   :month       :month-of-year
-   :quarter     :quarter-of-year
-   :year        :yyear})
-
-(defmethod sql.qp/->honeysql [:sqlite :datetime-extract]
-  [driver [_ arg unit]]
-  (sql.qp/date driver (date-extraction-op->unit unit) (sql.qp/->honeysql driver arg)))
 
 (defmethod sql.qp/add-interval-honeysql-form :sqlite
   [_driver hsql-form amount unit]

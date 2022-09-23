@@ -623,32 +623,8 @@
   datetime DateTimeExpressionArg
   unit     DateExtractUnits)
 
-(defclause ^{:requires-features #{:date-extraction}} get-year
-  date DateTimeExpressionArg)
-
-(defclause ^{:requires-features #{:date-extraction}} get-quarter
-  date DateTimeExpressionArg)
-
-(defclause ^{:requires-features #{:date-extraction}} get-month
-  date DateTimeExpressionArg)
-
-(defclause ^{:requires-features #{:date-extraction}} get-day
-  date DateTimeExpressionArg)
-
-(defclause ^{:requires-features #{:date-extraction}} get-day-of-week
-  date DateTimeExpressionArg)
-
-(defclause ^{:requires-features #{:date-extraction}} get-hour
-  datetime DateTimeExpressionArg)
-
-(defclause ^{:requires-features #{:date-extraction}} get-minute
-  datetime DateTimeExpressionArg)
-
-(defclause ^{:requires-features #{:date-extraction}} get-second
-  datetime DateTimeExpressionArg)
-
 (def ^:private DatetimeExpression*
-  (one-of datetime-extract get-year get-quarter get-month get-day get-day-of-week get-hour get-minute get-second))
+  (one-of datetime-extract))
 
 (def ^:private DatetimeExpression
   "Schema for the definition of a date function expression."
@@ -905,7 +881,7 @@
     ArithmeticExpression
     (one-of count avg cum-count cum-sum distinct stddev sum min max metric share count-where
             sum-where case median percentile ag:var
-            datetime-extract get-quarter get-month get-day get-day-of-week get-hour get-minute get-second)))
+            datetime-extract)))
 
 (def ^:private UnnamedAggregation
   (s/recursive #'UnnamedAggregation*))

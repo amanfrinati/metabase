@@ -386,22 +386,6 @@
 (defmethod sql.qp/date [:bigquery-cloud-sdk :year]             [_ _ expr] (trunc   :year      expr))
 (defmethod sql.qp/date [:bigquery-cloud-sdk :yyear]            [_ _ expr] (extract :year      expr))
 
-;; date extraction functions
-(def ^:private date-extraction-op->unit
-  {:second      :second-of-minute
-   :minute      :minute-of-hour
-   :hour        :hour-of-day
-   :day-of-week :day-of-week
-   :day         :day-of-month
-   :week        :week-of-year
-   :month       :month-of-year
-   :quarter     :quarter-of-year
-   :year        :yyear})
-
-(defmethod sql.qp/->honeysql [:bigquery-cloud-sdk :datetime-extract]
-  [driver [_ arg unit]]
-  (sql.qp/date driver (date-extraction-op->unit unit) (sql.qp/->honeysql driver arg)))
-
 ;; BigQuery mod is a function like mod(x, y) rather than an operator like x mod y
 (defmethod hformat/fn-handler (u/qualified-name ::mod)
   [_ x y]
