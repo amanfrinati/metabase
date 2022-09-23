@@ -20,6 +20,8 @@ export type BreakoutName = string;
 
 export type MetricDatum = { [key: MetricName]: MetricValue };
 
+export type SeriesOrder = Series<unknown, unknown>["seriesKey"][];
+
 export type SeriesInfo = {
   metricColumn: DatasetColumn;
   dimensionColumn: DatasetColumn;
@@ -209,19 +211,36 @@ const getMultipleMetricSeries = (
 export const getSeries = (
   data: DatasetData,
   chartColumns: ChartColumns,
+  seriesOrder?: SeriesOrder,
 ): Series<GroupedDatum, SeriesInfo>[] => {
+  let series: Series<GroupedDatum, SeriesInfo>[];
+
   if ("breakout" in chartColumns) {
     const breakoutValues = getBreakoutDistinctValues(
       data,
       chartColumns.breakout,
     );
 
-    return getBreakoutSeries(
+    series = getBreakoutSeries(
       breakoutValues,
       chartColumns.metric,
       chartColumns.dimension,
     );
+  } else {
+    series = getMultipleMetricSeries(
+      chartColumns.dimension,
+      chartColumns.metrics,
+    );
   }
 
-  return getMultipleMetricSeries(chartColumns.dimension, chartColumns.metrics);
+  if (seriesOrder) {
+    return seriesOrder
+      .map(
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        seriesKey => series.find(series => series.seriesKey === seriesKey)!,
+      )
+      .filter(Boolean);
+  }
+
+  return series;
 };

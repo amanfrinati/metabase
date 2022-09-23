@@ -32,6 +32,12 @@ export type SeriesSettings = {
   color?: string;
 };
 
+export type SeriesOrderSetting = {
+  name: string;
+  originalIndex: number;
+  enabled: boolean;
+};
+
 export type VisualizationSettings = {
   "graph.show_values"?: boolean;
   "stackable.stack_type"?: "stacked" | "normalized" | null;
@@ -57,6 +63,8 @@ export type VisualizationSettings = {
 
   // Series settings
   series_settings?: Record<string, SeriesSettings>;
+
+  "graph.series_order": SeriesOrderSetting[];
 
   [key: string]: any;
 };

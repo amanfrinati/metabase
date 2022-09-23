@@ -62,19 +62,29 @@ const RowChart = ({
   onVisualizationClick,
   ...props
 }: RowChartProps) => {
-  console.log(">>>set", settings);
   const chartColumns = useMemo(
     () => getChartColumns(data, settings),
     [data, settings],
   );
+
+  const seriesOrder = useMemo(() => {
+    const seriesOrderSettings = settings["graph.series_order"];
+    if (!seriesOrderSettings) {
+      return;
+    }
+
+    return seriesOrderSettings
+      .filter(setting => setting.enabled)
+      .map(setting => setting.name);
+  }, [settings]);
 
   const groupedData = useMemo(
     () => getGroupedDataset(data, chartColumns),
     [chartColumns, data],
   );
   const series = useMemo(
-    () => getSeries(data, chartColumns),
-    [chartColumns, data],
+    () => getSeries(data, chartColumns, seriesOrder),
+    [chartColumns, data, seriesOrder],
   );
 
   const seriesColors = useMemo(
@@ -101,7 +111,7 @@ const RowChart = ({
 
   const goal = useMemo(() => getChartGoal(settings), [settings]);
 
-  const theme: ChartTheme = useMemo(getChartTheme, []);
+  const theme = useMemo(getChartTheme, []);
 
   const stackingOffset = getStackingOffset(settings);
 
