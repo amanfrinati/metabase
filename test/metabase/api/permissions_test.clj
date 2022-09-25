@@ -170,7 +170,7 @@
           (is (= :all
                  (get-in (perms/data-perms-graph) [:groups group-id :execute])))
           (finally
-            (perms/update-global-execution-permission group-id :none)))))))
+            (perms/update-global-execution-permission! group-id :none)))))))
 
 ;;; +---------------------------------------------- permissions membership apis -----------------------------------------------------------+
 
