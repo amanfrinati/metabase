@@ -623,10 +623,37 @@
   datetime DateTimeExpressionArg
   unit     DateExtractUnits)
 
-(def ^:private DatetimeExpression*
-  (one-of datetime-extract))
+(defclause ^{:requires-features #{:date-extraction}} ^:sugar get-year
+  date DateTimeExpressionArg)
 
-(def ^:private DatetimeExpression
+(defclause ^{:requires-features #{:date-extraction}} ^:sugar get-quarter
+  date DateTimeExpressionArg)
+
+(defclause ^{:requires-features #{:date-extraction}} ^:sugar get-month
+  date DateTimeExpressionArg)
+
+(defclause ^{:requires-features #{:date-extraction}} ^:sugar get-day
+  date DateTimeExpressionArg)
+
+(defclause ^{:requires-features #{:date-extraction}} ^:sugar get-day-of-week
+  date DateTimeExpressionArg)
+
+(defclause ^{:requires-features #{:date-extraction}} ^:sugar get-hour
+  datetime DateTimeExpressionArg)
+
+(defclause ^{:requires-features #{:date-extraction}} ^:sugar get-minute
+  datetime DateTimeExpressionArg)
+
+(defclause ^{:requires-features #{:date-extraction}} ^:sugar get-second
+  datetime DateTimeExpressionArg)
+
+(def ^:private DatetimeExpression*
+  (one-of datetime-extract
+          ;; SUGAR drivers do not need to implement
+          get-year get-quarter get-month get-day get-day-of-week get-hour
+          get-month get-minute get-hour))
+
+(def DatetimeExpression
   "Schema for the definition of a date function expression."
   (s/recursive #'DatetimeExpression*))
 
@@ -822,7 +849,7 @@
 
 ;; For all of the 'normal' Aggregations below (excluding Metrics) fields are implicit Field IDs
 
-;; cum-sum and cum-count are SUGAR because they're implemented in middleware. They clauses are swapped out with
+;; cum-sum and cum-count are SUGAR because they're implemented in middleware. The clauses are swapped out with
 ;; `count` and `sum` aggregations respectively and summation is done in Clojure-land
 (defclause ^{:requires-features #{:basic-aggregations}} ^:sugar count,     field (optional Field))
 (defclause ^{:requires-features #{:basic-aggregations}} ^:sugar cum-count, field (optional Field))
@@ -879,9 +906,14 @@
 (def ^:private UnnamedAggregation*
   (s/if (partial is-clause? arithmetic-expressions)
     ArithmeticExpression
-    (one-of count avg cum-count cum-sum distinct stddev sum min max metric share count-where
+    (one-of avg cum-sum distinct stddev sum min max metric share count-where
             sum-where case median percentile ag:var
-            datetime-extract)))
+            datetime-extract
+            ;; SUGAR clauses
+            cum-count count
+            get-year get-quarter get-month get-day get-day-of-week get-hour
+            get-month get-minute get-hour)))
+
 
 (def ^:private UnnamedAggregation
   (s/recursive #'UnnamedAggregation*))
@@ -1391,8 +1423,8 @@
    :number/between          {:type :numeric, :operator :binary, :allowed-for #{:number/between}}
    :string/!=               {:type :string, :operator :variadic, :allowed-for #{:string/!=}}
    :string/=                {:type :string, :operator :variadic, :allowed-for #{:string/= :text :id :category
-                                                                                 :location/city :location/state
-                                                                                 :location/zip_code :location/country}}
+                                                                                :location/city :location/state
+                                                                                :location/zip_code :location/country}}
    :string/contains         {:type :string, :operator :unary, :allowed-for #{:string/contains}}
    :string/does-not-contain {:type :string, :operator :unary, :allowed-for #{:string/does-not-contain}}
    :string/ends-with        {:type :string, :operator :unary, :allowed-for #{:string/ends-with}}
